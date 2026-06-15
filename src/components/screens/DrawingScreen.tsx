@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Star } from "lucide-react";
-import { ACCENT } from "@/lib/constants";
+import { ACCENT, SHOW_DEBUG } from "@/lib/constants";
 import type { RoundResult } from "@/lib/types";
 import { useCamera } from "@/hooks/useCamera";
 import { useDrawing } from "@/hooks/useDrawing";
+import { useHandTracking } from "@/hooks/useHandTracking";
+import type { HandFrame } from "@/hooks/useHandTracking";
 import { useRound } from "@/hooks/useRound";
 import { AIPanel } from "@/components/game/AIPanel";
 import { CameraView } from "@/components/game/CameraView";
 import { CelebrationOverlay } from "@/components/game/CelebrationOverlay";
 import { DrawingCanvas } from "@/components/game/DrawingCanvas";
+import { RecognitionDebug } from "@/components/game/RecognitionDebug";
 import { TimerRing } from "@/components/game/TimerRing";
 import { Toolbar } from "@/components/game/Toolbar";
 
@@ -24,7 +27,28 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
 
   const camera = useCamera();
   const drawing = useDrawing({ onStrokeStart: dismissOnboarding });
-  const { timer, guesses, aiState, celebrate, skip } = useRound(word, drawing.getDataUrl, onRoundEnd);
+  const { timer, guesses, aiState, celebrate, skip } = useRound(word, drawing.getStrokes, drawing.getDataUrl, onRoundEnd);
+
+  // Translate hand frames into stroke actions: a pinch starts a stroke, opening
+  // the hand ends it, and an open hand just moves the cursor (hover).
+  const wasPinching = useRef(false);
+  const handStatus = useHandTracking({
+    videoRef: camera.videoRef,
+    enabled: camera.state === "granted",
+    onFrame: (f: HandFrame) => {
+      if (!f.present) {
+        if (wasPinching.current) drawing.strokeEnd();
+        drawing.hover(null);
+        wasPinching.current = false;
+        return;
+      }
+      if (f.pinching && !wasPinching.current) drawing.strokeStart(f.point);
+      else if (f.pinching) drawing.strokeMove(f.point);
+      else if (wasPinching.current) drawing.strokeEnd();
+      else drawing.hover(f.point);
+      wasPinching.current = f.pinching;
+    },
+  });
 
   return (
     <motion.div
@@ -93,6 +117,13 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
         <div className="flex flex-row md:flex-col gap-3 w-full md:w-72 lg:w-80 shrink-0 overflow-hidden">
           <div className="w-28 md:w-full">
             <CameraView videoRef={camera.videoRef} state={camera.state} onRequest={camera.request} />
+            {camera.state === "granted" && (
+              <p className="mt-1.5 text-[10px] md:text-[11px] text-center md:text-left text-muted-foreground">
+                {handStatus === "loading" && "Loading hand tracking…"}
+                {handStatus === "ready" && "✋ Pinch to draw in the air"}
+                {handStatus === "error" && "Hand tracking unavailable — use the mouse"}
+              </p>
+            )}
           </div>
           <div className="flex-1 min-w-0 overflow-y-auto md:overflow-visible">
             <div className="flex items-center gap-1.5 mb-2.5">
@@ -105,6 +136,8 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
           </div>
         </div>
       </div>
+
+      {SHOW_DEBUG && <RecognitionDebug guesses={guesses} />}
 
       {/* Celebration overlay */}
       <AnimatePresence>
