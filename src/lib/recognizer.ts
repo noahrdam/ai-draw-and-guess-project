@@ -142,11 +142,14 @@ export async function classify(strokes: Stroke[], topK = 4): Promise<Guess[]> {
   const model = await loadRecognizer();
   if (labels.length === 0) return [];
 
-  const probs = tf.tidy(() => {
+  // Run inference inside tidy so intermediate tensors are cleaned up,
+  // then read the result asynchronously to avoid blocking the main thread.
+  const outTensor = tf.tidy(() => {
     const x = tf.tensor(input, [1, 28, 28, 1]);
-    const out = model.predict(x) as tf.Tensor;
-    return Array.from(out.dataSync());
+    return model.predict(x) as tf.Tensor;
   });
+  const probs = Array.from(await outTensor.data());
+  outTensor.dispose();
 
   return probs
     .map((confidence, i) => ({ id: labels[i], word: pretty(labels[i]), confidence }))

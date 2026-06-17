@@ -25,6 +25,9 @@ export const EXCITED_CONFIDENCE = 0.4;
 /** Show the live 28x28 model-input preview while drawing (debugging/tuning). */
 export const SHOW_DEBUG = false;
 
+/** How long (ms) to hold a fist before the canvas clears. */
+export const FIST_HOLD_MS = 2000;
+
 /** Internal canvas resolution (drawing coordinates are normalised to this). */
 export const CW = 800;
 export const CH = 600;
