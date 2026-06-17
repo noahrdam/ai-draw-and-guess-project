@@ -30,8 +30,6 @@ export function loadRecognizer(): Promise<tf.LayersModel> {
   return modelPromise;
 }
 
-// --- Preprocessing -------------------------------------------------------
-
 const SRC = 256; // High-res square we rasterise into before downscaling to 28.
 
 let srcCanvas: HTMLCanvasElement | null = null;
@@ -126,8 +124,6 @@ export function paintDebug(target: HTMLCanvasElement) {
   ctx.clearRect(0, 0, target.width, target.height);
   ctx.drawImage(dstCanvas, 0, 0, target.width, target.height);
 }
-
-// --- Inference -----------------------------------------------------------
 
 const pretty = (label: string) => label.replace(/_/g, " ");
 

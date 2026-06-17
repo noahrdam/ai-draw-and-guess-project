@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Star } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { ACCENT, SHOW_DEBUG } from "@/lib/constants";
 import type { RoundResult } from "@/lib/types";
 import { useCamera } from "@/hooks/useCamera";
@@ -11,8 +11,7 @@ import { AIPanel } from "@/components/game/AIPanel";
 import { CameraView } from "@/components/game/CameraView";
 import { CelebrationOverlay } from "@/components/game/CelebrationOverlay";
 import { DrawingCanvas } from "@/components/game/DrawingCanvas";
-import { FistClearOverlay } from "@/components/game/FistClearOverlay";
-import { MusicToggleOverlay } from "@/components/game/MusicToggleOverlay";
+import { HoldGestureOverlay } from "@/components/game/HoldGestureOverlay";
 import { RecognitionDebug } from "@/components/game/RecognitionDebug";
 import { TimerRing } from "@/components/game/TimerRing";
 import { Toolbar } from "@/components/game/Toolbar";
@@ -156,8 +155,12 @@ export function DrawingScreen({ word, winStreak, highStreak, musicPlaying, onTog
 
       {SHOW_DEBUG && <RecognitionDebug guesses={guesses} />}
 
-      <FistClearOverlay overlayRef={fistOverlayRef} ringRef={fistRingRef} />
-      <MusicToggleOverlay overlayRef={musicOverlayRef} ringRef={musicRingRef} />
+      <HoldGestureOverlay overlayRef={fistOverlayRef} ringRef={fistRingRef} label="Hold to clear…">
+        <Trash2 size={30} style={{ color: ACCENT }} />
+      </HoldGestureOverlay>
+      <HoldGestureOverlay overlayRef={musicOverlayRef} ringRef={musicRingRef} label="Hold to toggle music">
+        <img src="/rat-dance.gif" alt="" className="w-14 h-14 object-contain" />
+      </HoldGestureOverlay>
 
       <AnimatePresence>
         {celebrate && <CelebrationOverlay word={word} />}

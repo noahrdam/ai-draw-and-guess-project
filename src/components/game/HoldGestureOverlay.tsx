@@ -1,14 +1,15 @@
-import type { RefObject } from "react";
-import { Trash2 } from "lucide-react";
+import type { ReactNode, RefObject } from "react";
 import { ACCENT } from "@/lib/constants";
 
 interface Props {
   overlayRef: RefObject<HTMLDivElement>;
   ringRef: RefObject<SVGCircleElement>;
+  label: string;
+  children: ReactNode;
 }
 
-/** Full-screen overlay that appears while the user holds a fist to clear the canvas. */
-export function FistClearOverlay({ overlayRef, ringRef }: Props) {
+/** Centered overlay with a circular progress ring, used for hold-to-trigger gestures. */
+export function HoldGestureOverlay({ overlayRef, ringRef, label, children }: Props) {
   return (
     <div
       ref={overlayRef}
@@ -33,9 +34,9 @@ export function FistClearOverlay({ overlayRef, ringRef }: Props) {
               style={{ strokeDasharray: "201", strokeDashoffset: "201" }}
             />
           </svg>
-          <Trash2 size={30} style={{ color: ACCENT }} />
+          {children}
         </div>
-        <span className="text-sm font-semibold text-muted-foreground">Hold to clear…</span>
+        <span className="text-sm font-semibold text-muted-foreground">{label}</span>
       </div>
     </div>
   );

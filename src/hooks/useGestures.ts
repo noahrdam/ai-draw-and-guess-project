@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import type { RefObject } from "react";
-import { FIST_HOLD_MS } from "@/lib/constants";
+import { HOLD_MS } from "@/lib/constants";
 import type { Point } from "@/lib/types";
 import { useHandTracking, type HandFrame, type HandStatus } from "@/hooks/useHandTracking";
 
@@ -24,11 +24,6 @@ interface GestureRefs {
   musicRingRef: RefObject<SVGCircleElement>;
 }
 
-/**
- * Translates raw hand frames into drawing actions and gesture commands.
- * Owns the DOM refs used for frame-rate progress feedback so the RAF loop
- * can update them directly without triggering React re-renders.
- */
 export function useGestures({
   videoRef, enabled,
   onStrokeStart, onStrokeMove, onStrokeEnd, onHover, onClear, onToggleMusic,
@@ -42,14 +37,13 @@ export function useGestures({
   const wasPinching      = useRef(false);
   const fistStartTime    = useRef(0);
   const fistLocked       = useRef(false);
-  const rockHornsCount   = useRef(0);
-  const rockHornsLocked  = useRef(false);
+  const rockHornsStartTime = useRef(0);
+  const rockHornsLocked    = useRef(false);
 
   const handStatus = useHandTracking({
     videoRef,
     enabled,
     onFrame: (f: HandFrame) => {
-      // ── Drawing ──────────────────────────────────────────────────────────
       if (!f.present) {
         if (wasPinching.current) onStrokeEnd();
         onHover(null);
@@ -62,12 +56,12 @@ export function useGestures({
       else                                    onHover(f.point);
       wasPinching.current = f.pinching;
 
-      // ── Fist hold → clear ────────────────────────────────────────────────
+      // fist → clear
       if (f.fist && !f.pinching) {
-        rockHornsCount.current = 0;
+        rockHornsStartTime.current = 0;
         if (!fistLocked.current) {
           if (fistStartTime.current === 0) fistStartTime.current = Date.now();
-          const pct = Math.min((Date.now() - fistStartTime.current) / FIST_HOLD_MS, 1);
+          const pct = Math.min((Date.now() - fistStartTime.current) / HOLD_MS, 1);
           if (fistOverlayRef.current) fistOverlayRef.current.style.opacity = "1";
           if (fistRingRef.current)    fistRingRef.current.style.strokeDashoffset = String(201 * (1 - pct));
           if (pct >= 1) {
@@ -86,17 +80,17 @@ export function useGestures({
           if (fistRingRef.current)    fistRingRef.current.style.strokeDashoffset = "201";
         }
 
-        // ── Rock horns hold → toggle music ─────────────────────────────────
+        // rock horns → music
         if (f.rockHorns && !f.pinching) {
           if (!rockHornsLocked.current) {
-            rockHornsCount.current += 1;
-            const pct = Math.round((rockHornsCount.current / 25) * 100);
-            if (progressBarRef.current)  progressBarRef.current.style.width = `${pct}%`;
+            if (rockHornsStartTime.current === 0) rockHornsStartTime.current = Date.now();
+            const pct = Math.min((Date.now() - rockHornsStartTime.current) / HOLD_MS, 1);
+            if (progressBarRef.current)  progressBarRef.current.style.width = `${Math.round(pct * 100)}%`;
             if (musicOverlayRef.current) musicOverlayRef.current.style.opacity = "1";
-            if (musicRingRef.current)    musicRingRef.current.style.strokeDashoffset = String(201 * (1 - rockHornsCount.current / 25));
-            if (rockHornsCount.current >= 25) {
+            if (musicRingRef.current)    musicRingRef.current.style.strokeDashoffset = String(201 * (1 - pct));
+            if (pct >= 1) {
               onToggleMusic();
-              rockHornsCount.current = 0;
+              rockHornsStartTime.current = 0;
               rockHornsLocked.current = true;
               if (progressBarRef.current)  progressBarRef.current.style.width = "0%";
               if (musicOverlayRef.current) musicOverlayRef.current.style.opacity = "0";
@@ -106,10 +100,10 @@ export function useGestures({
         } else {
           if (!f.rockHorns) {
             rockHornsLocked.current = false;
+            rockHornsStartTime.current = 0;
             if (musicOverlayRef.current) musicOverlayRef.current.style.opacity = "0";
             if (musicRingRef.current)    musicRingRef.current.style.strokeDashoffset = "201";
           }
-          rockHornsCount.current = 0;
           if (progressBarRef.current) progressBarRef.current.style.width = "0%";
         }
       }

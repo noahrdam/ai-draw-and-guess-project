@@ -36,13 +36,22 @@ export function Onboarding({ onDismiss }: { onDismiss: () => void }) {
           ))}
         </div>
 
-        {/* Thumbs up = toggle music */}
+        {/* Rock horns = toggle music — animated */}
         <div className="flex justify-center mb-4">
           <div className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 rounded-2xl bg-white border border-border shadow-sm flex items-center justify-center text-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-white border border-border shadow-sm flex items-center justify-center text-2xl relative">
               🤘
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 56 56" style={{ transform: "rotate(-90deg)" }}>
+                <motion.circle
+                  cx="28" cy="28" r="24"
+                  stroke={ACCENT} strokeWidth="3" fill="none" strokeLinecap="round"
+                  style={{ pathLength: 0 }}
+                  animate={{ pathLength: [0, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5, ease: "linear" }}
+                />
+              </svg>
             </div>
-            <span className="text-xs text-muted-foreground font-medium">Hold 1s to toggle music</span>
+            <span className="text-xs text-muted-foreground font-medium">Hold 2s to toggle music</span>
           </div>
         </div>
 

@@ -5,7 +5,7 @@ import { FloatBg } from "@/components/effects/FloatBg";
 const EXAMPLES = [
   { emoji: "🐱", name: "cat" },
   { emoji: "🌳", name: "tree" },
-  { emoji: "🚀", name: "rocket" },
+  { emoji: "🐘", name: "elephant" },
 ];
 
 export function WelcomeScreen({ highStreak, onStart }: { highStreak: number; onStart: () => void }) {
