@@ -51,27 +51,33 @@ export function DrawingCanvas({
           }}
         >
           <motion.div
-            animate={{ scale: pressing ? 1.35 : 1 }}
+            animate={{
+              width:      pressing ? 20 : 13,
+              height:     pressing ? 20 : 13,
+              background: pressing ? color : ACCENT,
+            }}
             transition={{ duration: 0.08 }}
             className="rounded-full"
-            style={{
-              width:     pressing ? 20 : 13,
-              height:    pressing ? 20 : 13,
-              background: pressing ? color : ACCENT,
-              boxShadow: `0 0 0 ${pressing ? 6 : 3}px ${(pressing ? color : ACCENT)}28`,
-            }}
+            style={{ boxShadow: `0 0 0 ${pressing ? 6 : 3}px ${(pressing ? color : ACCENT)}28` }}
           />
         </div>
       )}
 
-      {/* Empty hint */}
-      {isEmpty && !onboarding && (
-        <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none">
-          <p className="text-muted-foreground/25 text-base font-medium select-none">
-            Start drawing here...
-          </p>
-        </div>
-      )}
+      <AnimatePresence>
+        {isEmpty && !onboarding && (
+          <motion.div
+            className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <p className="text-muted-foreground/25 text-base font-medium select-none">
+              Start drawing here...
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {onboarding && <Onboarding onDismiss={onDismissOnboarding} />}
