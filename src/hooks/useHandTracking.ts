@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
-import { PINCH_OFF, PINCH_ON, fingertipToCanvas, pinchRatio } from "@/lib/hand";
+import { PINCH_OFF, PINCH_ON, fingertipToCanvas, fist, pinchRatio, rockHorns } from "@/lib/hand";
 import type { Point } from "@/lib/types";
 
 const WASM_URL =
@@ -17,6 +17,8 @@ export interface HandFrame {
   present: boolean;
   point: Point;
   pinching: boolean;
+  rockHorns: boolean;
+  fist: boolean;
 }
 
 interface Options {
@@ -44,7 +46,7 @@ export function useHandTracking({ videoRef, enabled, onFrame }: Options): HandSt
     let landmarker: HandLandmarker | null = null;
     let rafId = 0;
     let cancelled = false;
-    let pinching = false;        // hysteresis state
+    let pinching = false;
     let lastVideoTime = -1;
 
     const loop = () => {
@@ -61,13 +63,15 @@ export function useHandTracking({ videoRef, enabled, onFrame }: Options): HandSt
 
       if (!hand) {
         pinching = false;
-        onFrameRef.current({ present: false, point: { x: 0, y: 0 }, pinching: false });
+        onFrameRef.current({ present: false, point: { x: 0, y: 0 }, pinching: false, rockHorns: false, fist: false });
         return;
       }
 
+      const isFist = fist(hand);
       const ratio = pinchRatio(hand);
-      pinching = pinching ? ratio < PINCH_OFF : ratio < PINCH_ON;
-      onFrameRef.current({ present: true, point: fingertipToCanvas(hand), pinching });
+      // Fist overrides pinch — closing the hand shouldn't start a stroke
+      pinching = isFist ? false : (pinching ? ratio < PINCH_OFF : ratio < PINCH_ON);
+      onFrameRef.current({ present: true, point: fingertipToCanvas(hand), pinching, rockHorns: rockHorns(hand), fist: isFist });
     };
 
     (async () => {

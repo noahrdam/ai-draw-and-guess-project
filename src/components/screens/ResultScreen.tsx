@@ -6,16 +6,19 @@ import { Confetti } from "@/components/effects/Confetti";
 interface Props {
   word: string;
   aiGuess: string;
+  aiGuessConfidence: number;
   correct: boolean;
   timeTaken: number;
   dataUrl: string;
+  winStreak: number;
+  highStreak: number;
   onNext: () => void;
   onGallery: () => void;
 }
 
 /** Round summary: the drawing, what the AI guessed and next actions. */
 export function ResultScreen({
-  word, aiGuess, correct, timeTaken, dataUrl, onNext, onGallery,
+  word, aiGuess, aiGuessConfidence, correct, timeTaken, dataUrl, winStreak, highStreak, onNext, onGallery,
 }: Props) {
   return (
     <motion.div
@@ -43,6 +46,17 @@ export function ResultScreen({
           >
             {correct ? "Got it!" : "Almost!"}
           </h2>
+          {correct && winStreak >= 2 && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 400, damping: 20 }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold mt-2"
+              style={{ background: "#FFF3E0", color: "#E65100" }}
+            >
+              🔥 {winStreak} in a row{winStreak >= highStreak ? " · 🏆 New best!" : ""}
+            </motion.span>
+          )}
           <p className="text-muted-foreground text-sm mt-1">
             {correct
               ? "The AI guessed your drawing correctly!"
@@ -78,6 +92,11 @@ export function ResultScreen({
               >
                 {aiGuess}
               </p>
+              {correct && (
+                <p className="text-xs text-muted-foreground mt-0.5" style={{ fontFamily: "'DM Mono', monospace" }}>
+                  {Math.round(aiGuessConfidence * 100)}% confidence
+                </p>
+              )}
             </div>
           </div>
           <p className="text-center text-sm text-muted-foreground">

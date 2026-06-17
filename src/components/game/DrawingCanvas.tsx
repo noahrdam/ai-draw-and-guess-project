@@ -43,7 +43,7 @@ export function DrawingCanvas({
       {/* Custom cursor dot */}
       {cursor && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute pointer-events-none z-30"
           style={{
             left: `${(cursor.x / CW) * 100}%`,
             top:  `${(cursor.y / CH) * 100}%`,

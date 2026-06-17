@@ -8,11 +8,9 @@ export function GuessBubble({ guess, rank }: { guess: Guess; rank: number }) {
   const top = rank === 0;
   return (
     <motion.div
-      layout
-      layoutId={guess.id}
-      initial={{ opacity: 0, x: 28, scale: 0.88 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -20, scale: 0.88 }}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 28 }}
       className={`rounded-2xl p-3.5 ${top ? "bg-white border border-border shadow-sm" : "bg-background"}`}
     >

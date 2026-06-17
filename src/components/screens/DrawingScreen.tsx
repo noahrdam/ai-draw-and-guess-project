@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Star } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { ACCENT, SHOW_DEBUG } from "@/lib/constants";
 import type { RoundResult } from "@/lib/types";
 import { useCamera } from "@/hooks/useCamera";
@@ -18,12 +18,21 @@ import { Toolbar } from "@/components/game/Toolbar";
 
 interface Props {
   word: string;
+  winStreak: number;
+  highStreak: number;
+  musicPlaying: boolean;
+  onToggleMusic: () => void;
   onRoundEnd: (result: RoundResult) => void;
 }
 
-export function DrawingScreen({ word, onRoundEnd }: Props) {
+export function DrawingScreen({ word, winStreak, highStreak, musicPlaying, onToggleMusic, onRoundEnd }: Props) {
   const [onboarding, setOnboarding] = useState(true);
   const dismissOnboarding = () => setOnboarding(false);
+
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const fistOverlayRef = useRef<HTMLDivElement>(null);
+  const fistRingRef = useRef<SVGCircleElement>(null);
+  const thumbsUpCount = useRef(0);
 
   const camera = useCamera();
   const drawing = useDrawing({ onStrokeStart: dismissOnboarding });
@@ -32,6 +41,11 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
   // Translate hand frames into stroke actions: a pinch starts a stroke, opening
   // the hand ends it, and an open hand just moves the cursor (hover).
   const wasPinching = useRef(false);
+  const fistStartTime = useRef(0);
+  const fistLocked = useRef(false);
+  const rockHornsLocked = useRef(false);
+  const FIST_HOLD_MS = 2000;
+
   const handStatus = useHandTracking({
     videoRef: camera.videoRef,
     enabled: camera.state === "granted",
@@ -47,6 +61,53 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
       else if (wasPinching.current) drawing.strokeEnd();
       else drawing.hover(f.point);
       wasPinching.current = f.pinching;
+
+      if (f.fist && !f.pinching) {
+        thumbsUpCount.current = 0;
+        if (fistLocked.current) {
+          // already cleared — wait for fist release before allowing a new timer
+        } else {
+          if (fistStartTime.current === 0) fistStartTime.current = Date.now();
+          const pct = Math.min((Date.now() - fistStartTime.current) / FIST_HOLD_MS, 1);
+          if (fistOverlayRef.current) fistOverlayRef.current.style.opacity = "1";
+          if (fistRingRef.current) fistRingRef.current.style.strokeDashoffset = String(201 * (1 - pct));
+          if (pct >= 1) {
+            drawing.clear();
+            fistStartTime.current = 0;
+            fistLocked.current = true;
+            if (fistOverlayRef.current) fistOverlayRef.current.style.opacity = "0";
+            if (fistRingRef.current) fistRingRef.current.style.strokeDashoffset = "201";
+          }
+        }
+      } else {
+        // Fist released — unlock so next fist hold can trigger
+        if (!f.fist) {
+          fistLocked.current = false;
+          fistStartTime.current = 0;
+          if (fistOverlayRef.current) fistOverlayRef.current.style.opacity = "0";
+          if (fistRingRef.current) fistRingRef.current.style.strokeDashoffset = "201";
+        }
+
+        if (f.rockHorns && !f.pinching) {
+          if (rockHornsLocked.current) {
+            // already toggled — wait for release
+          } else {
+            thumbsUpCount.current += 1;
+            if (progressBarRef.current)
+              progressBarRef.current.style.width = `${Math.round((thumbsUpCount.current / 25) * 100)}%`;
+            if (thumbsUpCount.current >= 25) {
+              onToggleMusic();
+              thumbsUpCount.current = 0;
+              rockHornsLocked.current = true;
+              if (progressBarRef.current) progressBarRef.current.style.width = "0%";
+            }
+          }
+        } else {
+          if (!f.rockHorns) rockHornsLocked.current = false;
+          thumbsUpCount.current = 0;
+          if (progressBarRef.current) progressBarRef.current.style.width = "0%";
+        }
+      }
     },
   });
 
@@ -61,12 +122,46 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
     >
       {/* Top bar */}
       <div className="flex-none flex items-center justify-between px-4 md:px-7 py-3 border-b border-border bg-card/90 backdrop-blur-sm z-10">
-        <span
-          className="text-xl font-black"
-          style={{ fontFamily: "'Nunito', sans-serif", color: ACCENT }}
-        >
-          AirDraw
-        </span>
+        <div className="flex items-center gap-2.5">
+          <span
+            className="text-xl font-black"
+            style={{ fontFamily: "'Nunito', sans-serif", color: ACCENT }}
+          >
+            AirDraw
+          </span>
+          {winStreak >= 2 && (
+            <motion.div
+              key={winStreak}
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 20 }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
+              style={{ background: "#FFF3E0" }}
+            >
+              <span className="text-sm">🔥</span>
+              <span
+                className="text-sm font-black"
+                style={{ fontFamily: "'Nunito', sans-serif", color: "#E65100" }}
+              >
+                {winStreak}
+              </span>
+            </motion.div>
+          )}
+          {highStreak >= 2 && (
+            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
+              🏆 {highStreak}
+            </span>
+          )}
+          {musicPlaying && (
+            <motion.span
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+              className="text-base"
+            >
+              🎵
+            </motion.span>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <span className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
             Draw:&nbsp;
@@ -117,6 +212,13 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
         <div className="flex flex-row md:flex-col gap-3 w-full md:w-72 lg:w-80 shrink-0 overflow-hidden">
           <div className="w-28 md:w-full">
             <CameraView videoRef={camera.videoRef} state={camera.state} onRequest={camera.request} />
+            <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+              <div
+                ref={progressBarRef}
+                className="h-full rounded-full"
+                style={{ width: "0%", background: ACCENT }}
+              />
+            </div>
             {camera.state === "granted" && (
               <p className="mt-1.5 text-[10px] md:text-[11px] text-center md:text-left text-muted-foreground">
                 {handStatus === "loading" && "Loading hand tracking…"}
@@ -138,6 +240,32 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
       </div>
 
       {SHOW_DEBUG && <RecognitionDebug guesses={guesses} />}
+
+      {/* Fist-hold-to-clear overlay */}
+      <div
+        ref={fistOverlayRef}
+        className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+        style={{ opacity: 0, transition: "opacity 0.15s" }}
+      >
+        <div className="flex flex-col items-center gap-3 bg-white/95 backdrop-blur-sm rounded-3xl px-10 py-7 shadow-xl border border-border">
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 80 80" style={{ transform: "rotate(-90deg)" }}>
+              <circle cx="40" cy="40" r="32" stroke="#e5e7eb" strokeWidth="5" fill="none" />
+              <circle
+                ref={fistRingRef}
+                cx="40" cy="40" r="32"
+                stroke={ACCENT}
+                strokeWidth="5"
+                fill="none"
+                strokeLinecap="round"
+                style={{ strokeDasharray: "201", strokeDashoffset: "201" }}
+              />
+            </svg>
+            <Trash2 size={30} style={{ color: ACCENT }} />
+          </div>
+          <span className="text-sm font-semibold text-muted-foreground">Hold to clear…</span>
+        </div>
+      </div>
 
       {/* Celebration overlay */}
       <AnimatePresence>

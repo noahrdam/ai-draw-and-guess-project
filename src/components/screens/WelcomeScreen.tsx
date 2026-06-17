@@ -8,7 +8,7 @@ const EXAMPLES = [
   { emoji: "🚀", name: "rocket" },
 ];
 
-export function WelcomeScreen({ onStart }: { onStart: () => void }) {
+export function WelcomeScreen({ highStreak, onStart }: { highStreak: number; onStart: () => void }) {
   return (
     <motion.div
       className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden px-6"
@@ -69,6 +69,11 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
             Start drawing
           </motion.button>
           <p className="text-xs text-muted-foreground">Camera optional — mouse and touch work too</p>
+          {highStreak >= 2 && (
+            <p className="text-xs font-semibold" style={{ color: "#E65100" }}>
+              🔥 Best streak: {highStreak}
+            </p>
+          )}
         </motion.div>
 
         <motion.div

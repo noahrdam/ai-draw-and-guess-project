@@ -42,10 +42,14 @@ export function useRound(
     clearInterval(intervalId.current);
     clearInterval(inferId.current);
     const dataUrl = getDataUrlRef.current();
-    const aiGuess = guessesRef.current[0]?.word ?? "nothing";
+    const winGuess = correct
+      ? guessesRef.current.find(g => g.id === word)
+      : guessesRef.current[0];
+    const aiGuess = winGuess?.word ?? "nothing";
+    const aiGuessConfidence = winGuess?.confidence ?? 0;
     const timeTaken = Math.max(1, ROUND_DURATION - timerVal.current);
-    onEndRef.current({ correct, aiGuess, timeTaken, dataUrl });
-  }, []);
+    onEndRef.current({ correct, aiGuess, aiGuessConfidence, timeTaken, dataUrl });
+  }, [word]);
 
   // Countdown timer.
   useEffect(() => {
@@ -83,7 +87,7 @@ export function useRound(
         guessesRef.current = ranked;
 
         const top = ranked[0];
-        const won = top.id === word && top.confidence >= WIN_CONFIDENCE;
+        const won = ranked.some(g => g.id === word && g.confidence >= WIN_CONFIDENCE);
         setAIState(won ? "correct" : top.confidence >= EXCITED_CONFIDENCE ? "excited" : "thinking");
 
         if (won) {
