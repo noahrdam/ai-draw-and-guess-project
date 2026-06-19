@@ -5,8 +5,8 @@
  */
 export const WORDS = [
   "cat", "sun", "tree", "house", "fish",
-  "bird", "butterfly", "flower", "star", "pizza",
-  "umbrella", "hat", "moon", "car", "elephant",
+  "bird", "butterfly", "flower", "pants", "pizza",
+  "umbrella", "hat", "banana", "car", "elephant",
 ];
 
 export const ROUND_DURATION = 60;

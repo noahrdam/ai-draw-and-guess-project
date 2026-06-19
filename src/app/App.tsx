@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { WORDS } from "@/lib/constants";
+import { nextWord } from "@/lib/wordPicker";
 import type { GalleryItem, RoundResult, Screen } from "@/lib/types";
 import { WelcomeScreen } from "@/components/screens/WelcomeScreen";
 import { CountdownScreen } from "@/components/screens/CountdownScreen";
@@ -20,8 +20,7 @@ export default function App() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
 
   const startRound = useCallback(() => {
-    const word = WORDS[Math.floor(Math.random() * WORDS.length)];
-    setRound({ id: Date.now(), word });
+    setRound({ id: Date.now(), word: nextWord() });
     setScreen("countdown");
   }, []);
 
