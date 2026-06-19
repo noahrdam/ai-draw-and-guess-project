@@ -21,6 +21,7 @@ export interface Guess {
 export interface RoundResult {
   correct: boolean;
   aiGuess: string;
+  aiGuessConfidence: number;
   timeTaken: number;
   dataUrl: string;
 }

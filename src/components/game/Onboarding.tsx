@@ -15,14 +15,16 @@ export function Onboarding({ onDismiss }: { onDismiss: () => void }) {
     >
       <div className="text-center max-w-xs px-6">
         <p
-          className="text-lg font-bold mb-6"
+          className="text-lg font-bold mb-5"
           style={{ fontFamily: "'Nunito', sans-serif" }}
         >
           How to draw
         </p>
-        <div className="flex justify-center gap-8 mb-6">
+
+        {/* Pinch + lift */}
+        <div className="flex justify-center gap-6 mb-4">
           {[
-            { icon: "✊", label: "Pinch to draw" },
+            { icon: "🤏", label: "Pinch to draw" },
             { icon: "✋", label: "Open to lift" },
           ].map(({ icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-2">
@@ -33,6 +35,45 @@ export function Onboarding({ onDismiss }: { onDismiss: () => void }) {
             </div>
           ))}
         </div>
+
+        {/* Rock horns = toggle music — animated */}
+        <div className="flex justify-center mb-4">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-2xl bg-white border border-border shadow-sm flex items-center justify-center text-2xl relative">
+              🤘
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 56 56" style={{ transform: "rotate(-90deg)" }}>
+                <motion.circle
+                  cx="28" cy="28" r="24"
+                  stroke={ACCENT} strokeWidth="3" fill="none" strokeLinecap="round"
+                  style={{ pathLength: 0 }}
+                  animate={{ pathLength: [0, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5, ease: "linear" }}
+                />
+              </svg>
+            </div>
+            <span className="text-xs text-muted-foreground font-medium">Hold 2s to toggle music</span>
+          </div>
+        </div>
+
+        {/* Fist hold to clear — animated */}
+        <div className="flex justify-center mb-4">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-2xl bg-white border border-border shadow-sm flex items-center justify-center text-2xl relative">
+              ✊
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 56 56" style={{ transform: "rotate(-90deg)" }}>
+                <motion.circle
+                  cx="28" cy="28" r="24"
+                  stroke={ACCENT} strokeWidth="3" fill="none" strokeLinecap="round"
+                  style={{ pathLength: 0 }}
+                  animate={{ pathLength: [0, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5, ease: "linear" }}
+                />
+              </svg>
+            </div>
+            <span className="text-xs text-muted-foreground font-medium">Hold fist 2s to clear</span>
+          </div>
+        </div>
+
         <p className="text-sm text-muted-foreground mb-1">Or just click / tap to draw</p>
         <motion.p
           className="text-xs mt-4"

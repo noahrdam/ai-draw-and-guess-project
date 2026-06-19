@@ -18,12 +18,14 @@ export const LABELS_URL = "/model/class_names.txt";
 /** How often (ms) we run the drawing through the model while the round is live. */
 export const INFER_INTERVAL = 600;
 /** Top-1 confidence (and label === word) at which the AI "gets it". */
-export const WIN_CONFIDENCE = 0.5;
+export const WIN_CONFIDENCE = 0.01;
 /** Top-1 confidence above which the AI looks excited (but not yet certain). */
 export const EXCITED_CONFIDENCE = 0.4;
 
 /** Show the live 28x28 model-input preview while drawing (debugging/tuning). */
-export const SHOW_DEBUG = true;
+export const SHOW_DEBUG = false;
+
+export const HOLD_MS = 2000;
 
 /** Internal canvas resolution (drawing coordinates are normalised to this). */
 export const CW = 800;

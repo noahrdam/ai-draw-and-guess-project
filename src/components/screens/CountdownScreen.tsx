@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ACCENT } from "@/lib/constants";
 
 /** Shows the word to draw, then a 3-2-1-Go! countdown before the round. */
-export function CountdownScreen({ word, onDone }: { word: string; onDone: () => void }) {
+export function CountdownScreen({ word, winStreak, onDone }: { word: string; winStreak: number; onDone: () => void }) {
   const [phase, setPhase] = useState<"word" | "count">("word");
   const [count, setCount] = useState(3);
 
@@ -51,6 +51,23 @@ export function CountdownScreen({ word, onDone }: { word: string; onDone: () => 
             >
               {word}
             </h2>
+            {winStreak >= 2 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, type: "spring", stiffness: 300, damping: 24 }}
+                className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-2xl"
+                style={{ background: "#FFF3E0" }}
+              >
+                <span className="text-lg">🔥</span>
+                <span
+                  className="font-bold text-sm"
+                  style={{ fontFamily: "'DM Sans', sans-serif", color: "#E65100" }}
+                >
+                  {winStreak} win streak — keep it going!
+                </span>
+              </motion.div>
+            )}
           </motion.div>
         ) : (
           <motion.div

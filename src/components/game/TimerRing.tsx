@@ -13,10 +13,10 @@ export function TimerRing({ value }: { value: number }) {
         <circle cx="24" cy="24" r={R} fill="none" stroke="#E8E4DE" strokeWidth="3" />
         <motion.circle
           cx="24" cy="24" r={R}
-          fill="none" stroke={color} strokeWidth="3"
+          fill="none" strokeWidth="3"
           strokeLinecap="round"
           strokeDasharray={C}
-          animate={{ strokeDashoffset: C * (1 - pct) }}
+          animate={{ strokeDashoffset: C * (1 - pct), stroke: color }}
           transition={{ duration: 0.5 }}
         />
       </svg>

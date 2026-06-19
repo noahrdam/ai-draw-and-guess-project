@@ -1,5 +1,7 @@
 # AirDraw — air-drawing draw & guess
 
+To try out the game we have deployed it on Render here: https://airdraw-6yxg.onrender.com/
+
 AirDraw is a browser prototype where you **draw in the air with your hand** in
 front of the webcam, and an AI tries to guess what you're drawing in real time —
 inspired by Google's *Quick, Draw!*, with no mouse or touchscreen required.

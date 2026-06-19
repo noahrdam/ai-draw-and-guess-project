@@ -30,7 +30,17 @@ export function renderCanvas(
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.moveTo(s.points[0].x, s.points[0].y);
-    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+    if (s.points.length === 2) {
+      ctx.lineTo(s.points[1].x, s.points[1].y);
+    } else {
+      for (let i = 1; i < s.points.length - 1; i++) {
+        const mx = (s.points[i].x + s.points[i + 1].x) / 2;
+        const my = (s.points[i].y + s.points[i + 1].y) / 2;
+        ctx.quadraticCurveTo(s.points[i].x, s.points[i].y, mx, my);
+      }
+      const last = s.points[s.points.length - 1];
+      ctx.lineTo(last.x, last.y);
+    }
     ctx.stroke();
   }
 }

@@ -1,9 +1,10 @@
+import { useMemo } from "react";
 import { motion } from "motion/react";
 import { CONF_COLORS } from "@/lib/constants";
 
 /** A burst of falling confetti pieces, used on a correct guess. */
 export function Confetti() {
-  const pieces = Array.from({ length: 48 }, (_, i) => ({
+  const pieces = useMemo(() => Array.from({ length: 48 }, (_, i) => ({
     id: i,
     x:     Math.random() * 100,
     dx:    (Math.random() - 0.5) * 70,
@@ -13,7 +14,7 @@ export function Confetti() {
     rot:   Math.random() * 360,
     delay: Math.random() * 0.5,
     dur:   2.2 + Math.random() * 1.3,
-  }));
+  })), []);
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-50" aria-hidden>

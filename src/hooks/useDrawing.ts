@@ -9,13 +9,6 @@ interface Options {
   onStrokeStart?: () => void;
 }
 
-/**
- * Owns the drawing canvas: stroke state, rendering, and the low-level stroke
- * actions. Both the mouse/touch pointer handlers and the air-drawing hand
- * tracker drive the same `strokeStart / strokeMove / strokeEnd` API, so the two
- * input methods stay in sync. Refs back the live stroke and pressing flag so
- * calls from outside React's event system (the rAF hand loop) stay correct.
- */
 export function useDrawing({ onStrokeStart }: Options = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -46,8 +39,6 @@ export function useDrawing({ onStrokeStart }: Options = {}) {
     setLive(pts);
   };
 
-  // --- Imperative stroke API (shared by pointer + hand input) -------------
-
   const strokeStart = useCallback((p: Point) => {
     onStrokeStart?.();
     pressingRef.current = true;
@@ -76,8 +67,6 @@ export function useDrawing({ onStrokeStart }: Options = {}) {
   /** Move the cursor without drawing (e.g. an open hand hovering). */
   const hover = useCallback((p: Point | null) => setCursor(p), []);
 
-  // --- Pointer (mouse / touch) adapters ----------------------------------
-
   const onDown = (e: PointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     strokeStart(getPoint(e.nativeEvent, canvasRef.current!));
@@ -86,8 +75,6 @@ export function useDrawing({ onStrokeStart }: Options = {}) {
     strokeMove(getPoint(e.nativeEvent, canvasRef.current!));
   };
   const onUp = () => strokeEnd();
-
-  // --- Editing -----------------------------------------------------------
 
   const undo = useCallback(() => setStrokes(prev => prev.slice(0, -1)), []);
   const clear = useCallback(() => { setStrokes([]); setLiveBoth([]); }, []);
@@ -101,18 +88,14 @@ export function useDrawing({ onStrokeStart }: Options = {}) {
     pressing,
     strokes,
     isEmpty: strokes.length === 0 && live.length === 0,
-    // pointer adapters
     onDown,
     onMove,
     onUp,
-    // imperative API for hand tracking
     strokeStart,
     strokeMove,
     strokeEnd,
     hover,
-    // recognition input
     getStrokes,
-    // editing
     undo,
     clear,
     getDataUrl,

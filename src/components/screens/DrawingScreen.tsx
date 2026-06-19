@@ -1,53 +1,47 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Star } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { ACCENT, SHOW_DEBUG } from "@/lib/constants";
 import type { RoundResult } from "@/lib/types";
 import { useCamera } from "@/hooks/useCamera";
 import { useDrawing } from "@/hooks/useDrawing";
-import { useHandTracking } from "@/hooks/useHandTracking";
-import type { HandFrame } from "@/hooks/useHandTracking";
+import { useGestures } from "@/hooks/useGestures";
 import { useRound } from "@/hooks/useRound";
 import { AIPanel } from "@/components/game/AIPanel";
 import { CameraView } from "@/components/game/CameraView";
 import { CelebrationOverlay } from "@/components/game/CelebrationOverlay";
 import { DrawingCanvas } from "@/components/game/DrawingCanvas";
+import { HoldGestureOverlay } from "@/components/game/HoldGestureOverlay";
 import { RecognitionDebug } from "@/components/game/RecognitionDebug";
 import { TimerRing } from "@/components/game/TimerRing";
 import { Toolbar } from "@/components/game/Toolbar";
 
 interface Props {
   word: string;
+  winStreak: number;
+  highStreak: number;
+  musicPlaying: boolean;
+  onToggleMusic: () => void;
   onRoundEnd: (result: RoundResult) => void;
 }
 
-export function DrawingScreen({ word, onRoundEnd }: Props) {
+export function DrawingScreen({ word, winStreak, highStreak, musicPlaying, onToggleMusic, onRoundEnd }: Props) {
   const [onboarding, setOnboarding] = useState(true);
-  const dismissOnboarding = () => setOnboarding(false);
 
-  const camera = useCamera();
-  const drawing = useDrawing({ onStrokeStart: dismissOnboarding });
-  const { timer, guesses, aiState, celebrate, skip } = useRound(word, drawing.getStrokes, drawing.getDataUrl, onRoundEnd);
-
-  // Translate hand frames into stroke actions: a pinch starts a stroke, opening
-  // the hand ends it, and an open hand just moves the cursor (hover).
-  const wasPinching = useRef(false);
-  const handStatus = useHandTracking({
-    videoRef: camera.videoRef,
-    enabled: camera.state === "granted",
-    onFrame: (f: HandFrame) => {
-      if (!f.present) {
-        if (wasPinching.current) drawing.strokeEnd();
-        drawing.hover(null);
-        wasPinching.current = false;
-        return;
-      }
-      if (f.pinching && !wasPinching.current) drawing.strokeStart(f.point);
-      else if (f.pinching) drawing.strokeMove(f.point);
-      else if (wasPinching.current) drawing.strokeEnd();
-      else drawing.hover(f.point);
-      wasPinching.current = f.pinching;
-    },
+  const camera  = useCamera();
+  const drawing = useDrawing({ onStrokeStart: () => setOnboarding(false) });
+  const { timer, guesses, aiState, celebrate, skip } = useRound(
+    word, drawing.getStrokes, drawing.getDataUrl, onRoundEnd,
+  );
+  const { handStatus, progressBarRef, fistOverlayRef, fistRingRef, musicOverlayRef, musicRingRef } = useGestures({
+    videoRef:       camera.videoRef,
+    enabled:        camera.state === "granted",
+    onStrokeStart:  drawing.strokeStart,
+    onStrokeMove:   drawing.strokeMove,
+    onStrokeEnd:    drawing.strokeEnd,
+    onHover:        drawing.hover,
+    onClear:        drawing.clear,
+    onToggleMusic,
   });
 
   return (
@@ -61,16 +55,41 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
     >
       {/* Top bar */}
       <div className="flex-none flex items-center justify-between px-4 md:px-7 py-3 border-b border-border bg-card/90 backdrop-blur-sm z-10">
-        <span
-          className="text-xl font-black"
-          style={{ fontFamily: "'Nunito', sans-serif", color: ACCENT }}
-        >
-          AirDraw
-        </span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl font-black" style={{ fontFamily: "'Nunito', sans-serif", color: ACCENT }}>
+            AirDraw
+          </span>
+          {winStreak >= 2 && (
+            <motion.div
+              key={winStreak}
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 20 }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
+              style={{ background: "#FFF3E0" }}
+            >
+              <span className="text-sm">🔥</span>
+              <span className="text-sm font-black" style={{ fontFamily: "'Nunito', sans-serif", color: "#E65100" }}>
+                {winStreak}
+              </span>
+            </motion.div>
+          )}
+          {highStreak >= 2 && (
+            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">🏆 {highStreak}</span>
+          )}
+          {musicPlaying && (
+            <motion.span
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+              className="text-base"
+            >
+              🎵
+            </motion.span>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <span className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
-            Draw:&nbsp;
-            <span className="font-bold text-foreground capitalize">{word}</span>
+            Draw:&nbsp;<span className="font-bold text-foreground capitalize">{word}</span>
           </span>
           <TimerRing value={timer} />
           <button
@@ -84,8 +103,7 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
 
       {/* Mobile word */}
       <div className="sm:hidden flex-none text-center py-2 bg-secondary/50 text-sm font-semibold border-b border-border">
-        Draw a&nbsp;
-        <span className="capitalize" style={{ color: ACCENT }}>{word}</span>
+        Draw a&nbsp;<span className="capitalize" style={{ color: ACCENT }}>{word}</span>
       </div>
 
       {/* Body */}
@@ -100,28 +118,26 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
             color={drawing.color}
             isEmpty={drawing.isEmpty}
             onboarding={onboarding}
-            onDismissOnboarding={dismissOnboarding}
+            onDismissOnboarding={() => setOnboarding(false)}
             onPointerDown={drawing.onDown}
             onPointerMove={drawing.onMove}
             onPointerUp={drawing.onUp}
           />
-          <Toolbar
-            color={drawing.color}
-            onColor={drawing.setColor}
-            onUndo={drawing.undo}
-            onClear={drawing.clear}
-          />
+          <Toolbar color={drawing.color} onColor={drawing.setColor} onUndo={drawing.undo} onClear={drawing.clear} />
         </div>
 
-        {/* AI sidebar — row on mobile, column on desktop */}
+        {/* AI sidebar */}
         <div className="flex flex-row md:flex-col gap-3 w-full md:w-72 lg:w-80 shrink-0 overflow-hidden">
           <div className="w-28 md:w-full">
             <CameraView videoRef={camera.videoRef} state={camera.state} onRequest={camera.request} />
+            <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+              <div ref={progressBarRef} className="h-full rounded-full" style={{ width: "0%", background: ACCENT }} />
+            </div>
             {camera.state === "granted" && (
               <p className="mt-1.5 text-[10px] md:text-[11px] text-center md:text-left text-muted-foreground">
                 {handStatus === "loading" && "Loading hand tracking…"}
-                {handStatus === "ready" && "✋ Pinch to draw in the air"}
-                {handStatus === "error" && "Hand tracking unavailable — use the mouse"}
+                {handStatus === "ready"   && "✋ Pinch to draw in the air"}
+                {handStatus === "error"   && "Hand tracking unavailable — use the mouse"}
               </p>
             )}
           </div>
@@ -139,7 +155,13 @@ export function DrawingScreen({ word, onRoundEnd }: Props) {
 
       {SHOW_DEBUG && <RecognitionDebug guesses={guesses} />}
 
-      {/* Celebration overlay */}
+      <HoldGestureOverlay overlayRef={fistOverlayRef} ringRef={fistRingRef} label="Hold to clear…">
+        <Trash2 size={30} style={{ color: ACCENT }} />
+      </HoldGestureOverlay>
+      <HoldGestureOverlay overlayRef={musicOverlayRef} ringRef={musicRingRef} label="Hold to toggle music">
+        <img src="/rat-dance.gif" alt="" className="w-14 h-14 object-contain" />
+      </HoldGestureOverlay>
+
       <AnimatePresence>
         {celebrate && <CelebrationOverlay word={word} />}
       </AnimatePresence>

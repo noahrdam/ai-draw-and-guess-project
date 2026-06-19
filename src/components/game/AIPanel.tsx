@@ -41,7 +41,7 @@ export function AIPanel({ state, guesses }: { state: AIState; guesses: Guess[] }
         </AnimatePresence>
       </div>
 
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence initial={false}>
         {guesses.length === 0 ? (
           <motion.div
             key="empty"
@@ -53,7 +53,7 @@ export function AIPanel({ state, guesses }: { state: AIState; guesses: Guess[] }
             <p className="text-sm text-muted-foreground">Guesses appear as you draw...</p>
           </motion.div>
         ) : (
-          guesses.map((g, i) => <GuessBubble key={g.id} guess={g} rank={i} />)
+          guesses.map((g, i) => <GuessBubble key={i} guess={g} rank={i} />)
         )}
       </AnimatePresence>
     </div>
